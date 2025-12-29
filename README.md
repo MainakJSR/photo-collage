@@ -1,222 +1,327 @@
-# Photo Processing and Collage Creator
+# Photo Processing & Collage Maker
 
-A Python-based photo processing pipeline that performs face detection, intelligent cropping, image enhancement, and creates beautiful collages from your photos.
+A Python-based photo processing pipeline that enhances images and creates beautiful collages while preserving original image dimensions.
 
 ## Features
 
-- **Face Detection**: Automatically detect faces in photos using OpenCV or face_recognition library
-- **Intelligent Cropping**: Crop photos to focus on detected faces with configurable padding
-- **Flexible Aspect Ratios**: Support for both square and rectangular crops
-- **Image Enhancement**: 
-  - Brightness adjustment
-  - Contrast enhancement
-  - Sharpness enhancement
-  - Color saturation boost
-  - Optional denoising
-- **Collage Creation**: Generate beautiful photo collages with customizable layouts
-- **All Open Source**: Uses only open-source Python libraries
+- ✨ **Image Enhancement**: Automatically improves brightness, contrast, sharpness, and color saturation
+- 📸 **No Cropping/Resizing**: Keeps images at their original size and aspect ratio
+- 🖼️ **Flexible Collage Layout**: Creates collages with 1-5 images per row based on image dimensions
+- 📅 **EXIF Date Sorting**: Automatically sorts images by creation date from EXIF data
+- 🔢 **Sequential Naming**: Renames processed images sequentially (1.jpg, 2.jpg, etc.)
+- 📊 **Detailed Logging**: Tracks all processing steps with comprehensive logging
 
 ## Project Structure
 
 ```
 Photos-3-001/
-├── input/              # Place your original photos here
-├── processed/          # Processed photos (cropped & enhanced)
-├── output/             # Final collages
-├── config.py           # Configuration settings
-├── face_detector.py    # Face detection module
-├── image_processor.py  # Image cropping and resizing
-├── image_enhancer.py   # Image enhancement module
-├── collage_maker.py    # Collage creation module
-├── main.py             # Main pipeline script
-├── requirements.txt    # Python dependencies
-└── README.md           # This file
+├── main.py                 # Main entry point - orchestrates the pipeline
+├── config.py              # Configuration settings
+├── image_processor.py     # Keeps images at original size (no resizing)
+├── image_enhancer.py      # Enhances image quality (brightness, contrast, etc.)
+├── collage_maker.py       # Creates flexible collages with EXIF sorting
+├── requirements.txt       # Python dependencies
+├── setup.sh              # Setup script for environment
+├── input/                # Place your original photos here
+├── processed/            # Enhanced images (renamed sequentially)
+├── output/               # Final collages
+└── photo_processing.log  # Detailed processing log
 ```
 
 ## Installation
 
 ### Prerequisites
 
-- Python 3.7 or higher
-- pip package manager
+- Python 3.8 or higher
+- Virtual environment (recommended)
 
 ### Setup
 
-1. **Clone or navigate to the project directory:**
+1. **Clone or navigate to the project directory**:
    ```bash
-   cd /home/mainak1/Documents/Risabh/Photos-3-001
+   cd /path/to/Photos-3-001
    ```
 
-2. **Create a virtual environment (recommended):**
+2. **Run the setup script**:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   chmod +x setup.sh
+   ./setup.sh
    ```
 
-3. **Install dependencies:**
+   Or manually:
    ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-   **Note**: Installing `dlib` and `face-recognition` may require additional system dependencies:
-   
-   - **Ubuntu/Debian:**
-     ```bash
-     sudo apt-get install build-essential cmake
-     sudo apt-get install libopenblas-dev liblapack-dev
-     ```
-   
-   - **macOS:**
-     ```bash
-     brew install cmake
-     ```
+### Dependencies
+
+- `opencv-python` - Image processing
+- `Pillow` - Image manipulation and EXIF handling
+- `numpy` - Numerical operations
 
 ## Usage
 
-### Basic Usage
+### Basic Workflow
 
-1. **Place your photos in the `input` folder**
-
-2. **Run the pipeline:**
+1. **Add your photos** to the `input/` directory
    ```bash
+   cp /path/to/your/photos/*.jpg input/
+   ```
+
+2. **Run the pipeline**:
+   ```bash
+   source .venv/bin/activate  # Activate virtual environment
    python main.py
    ```
 
-3. **Find your results:**
-   - Processed photos: `processed/` folder
-   - Final collage: `output/` folder
+3. **Check the results**:
+   - Enhanced images: `processed/` (renamed 1.jpg, 2.jpg, etc.)
+   - Final collage: `output/collage_YYYYMMDD_HHMMSS.jpg`
 
-### Configuration
+### What Happens During Processing
 
-Edit `config.py` to customize the processing:
+1. **Image Loading**: Scans `input/` directory for supported formats (.jpg, .jpeg, .png)
+2. **Enhancement**: Applies brightness, contrast, sharpness, and color adjustments
+3. **Saving**: Saves enhanced images to `processed/` directory
+4. **EXIF Sorting**: Reads creation dates from EXIF data and sorts images chronologically
+5. **Sequential Naming**: Renames files as 1.jpg, 2.jpg, etc. based on date order
+6. **Collage Creation**: Arranges images in flexible rows (1-5 images per row)
+7. **Output**: Saves final collage to `output/` directory
 
-#### Face Detection Settings
-```python
-FACE_DETECTION_METHOD = "opencv"  # or "face_recognition"
-MIN_FACE_SIZE = (30, 30)         # Minimum face size to detect
-FACE_PADDING = 50                # Pixels around detected face
+### EXIF Date Handling
+
+If an image doesn't have EXIF date information, you'll be prompted:
+```
+Enter date for 'IMG_1234.jpg' (DD-MM-YYYY or press Enter to use file date):
 ```
 
-#### Cropping Settings
+- Enter date in `DD-MM-YYYY` format (e.g., `15-08-2021`)
+- Press Enter to use the file's modification date
+
+## Configuration
+
+Edit `config.py` to customize processing settings:
+
+### Directory Paths
+
 ```python
-CROP_SHAPE = "rectangle"         # "square" or "rectangle"
-ASPECT_RATIO = (4, 3)            # For rectangle mode
-TARGET_SIZE = (800, 600)         # Output image size
+INPUT_DIR = os.path.join(BASE_DIR, "input")      # Source images
+PROCESSED_DIR = os.path.join(BASE_DIR, "processed")  # Enhanced images
+OUTPUT_DIR = os.path.join(BASE_DIR, "output")    # Final collages
 ```
 
-#### Enhancement Settings
+### Image Enhancement Settings
+
 ```python
 ENHANCE_BRIGHTNESS = True
-BRIGHTNESS_FACTOR = 1.1          # 1.0 = no change
+BRIGHTNESS_FACTOR = 1.1    # 1.0 = no change, >1.0 = brighter, <1.0 = darker
+
 ENHANCE_CONTRAST = True
-CONTRAST_FACTOR = 1.2
+CONTRAST_FACTOR = 1.2      # 1.0 = no change, >1.0 = more contrast
+
 ENHANCE_SHARPNESS = True
-SHARPNESS_FACTOR = 1.3
+SHARPNESS_FACTOR = 1.3     # 1.0 = no change, >1.0 = sharper
+
 ENHANCE_COLOR = True
-COLOR_FACTOR = 1.1
+COLOR_FACTOR = 1.1         # 1.0 = no change, >1.0 = more saturated
 ```
 
-#### Collage Settings
+### Collage Settings
+
 ```python
-COLLAGE_WIDTH = 3000             # Width in pixels
-COLLAGE_COLUMNS = 4              # Number of columns
-COLLAGE_SPACING = 10             # Spacing between images
+COLLAGE_WIDTH = 6000       # Target width in pixels (reference only)
+COLLAGE_COLUMNS = 5        # Max images per row (1-5)
+COLLAGE_SPACING = 20       # Spacing between images in pixels
+COLLAGE_BACKGROUND_COLOR = (255, 255, 255)  # RGB tuple (white)
+```
+
+### Supported Image Formats
+
+```python
+SUPPORTED_FORMATS = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
+```
+
+### Logging
+
+```python
+LOG_LEVEL = "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
 ```
 
 ## How It Works
 
-1. **Face Detection**: The system scans each photo and detects faces using either OpenCV's Haar Cascade or the face_recognition library
+### Image Processing (No Resizing!)
 
-2. **Intelligent Cropping**: Based on detected faces, the image is cropped to focus on the important areas with configurable padding
+The `ImageProcessor` class keeps images at their **original size**:
+- No cropping
+- No resizing
+- Maintains original aspect ratios
+- Only enhancement is applied
 
-3. **Enhancement**: Each photo is enhanced for better quality:
-   - Brightness and contrast adjustments
-   - Sharpness enhancement
-   - Color saturation boost
+### Image Enhancement
 
-4. **Collage Creation**: All processed photos are arranged into a beautiful grid-based collage
+The `ImageEnhancer` class uses PIL (Pillow) to improve image quality:
+- **Brightness**: Makes images lighter or darker
+- **Contrast**: Enhances the difference between light and dark areas
+- **Sharpness**: Increases edge definition and clarity
+- **Color**: Adjusts color saturation
 
-## Advanced Usage
+### Collage Layout
 
-### Using Different Face Detection Methods
+The `CollageMaker` class creates flexible collages:
+- **Intelligent Row Arrangement**: Groups 1-5 images per row based on widths
+- **No Image Resizing**: Uses original image dimensions
+- **Vertical Centering**: Aligns images vertically within each row
+- **Horizontal Centering**: Centers rows within the collage
+- **EXIF Date Sorting**: Orders images chronologically
+- **Sequential Naming**: Renames files 1, 2, 3, etc.
 
-The project supports two face detection methods:
+#### Row Layout Logic
 
-- **OpenCV** (default): Faster, good for most cases
-- **face_recognition**: More accurate, slower
+- Images are arranged to fit within the target width
+- Each row can contain 1-5 images
+- Wide landscape photos get fewer images per row
+- Portrait photos can fit more per row
+- Images maintain their original dimensions
 
-Change in `config.py`:
-```python
-FACE_DETECTION_METHOD = "face_recognition"
+## Examples
+
+### Example Output
+
+**Input**: 21 photos of various sizes
+**Output**: 
+- 21 enhanced images in `processed/` (named 1.jpg through 21.jpg)
+- 1 collage in `output/` (e.g., 6614x39676 pixels for 21 full-resolution photos)
+
+### Sample Log Output
+
 ```
-
-### Custom Image Processing
-
-You can import and use individual modules in your own scripts:
-
-```python
-from face_detector import FaceDetector
-from image_processor import ImageProcessor
-from image_enhancer import ImageEnhancer
-from collage_maker import CollageMaker
-
-# Initialize components
-detector = FaceDetector(method="opencv")
-processor = ImageProcessor(crop_shape="square")
-enhancer = ImageEnhancer(brightness_factor=1.2)
-collage = CollageMaker(columns=3)
-
-# Use them in your code...
+2025-12-29 11:00:26,746 - INFO - Starting Photo Processing Pipeline
+2025-12-29 11:00:26,746 - INFO - Scanning input directory
+2025-12-29 11:00:26,746 - INFO - Found 21 images
+2025-12-29 11:00:26,746 - INFO - Processing 21 images...
+2025-12-29 11:00:56,212 - INFO - Successfully processed 21/21 images
+2025-12-29 11:00:56,212 - INFO - Creating collage...
+2025-12-29 11:00:22,994 - INFO - Arranged 21 images into 10 rows
+2025-12-29 11:00:26,631 - INFO - Collage saved (6614x39676)
+2025-12-29 11:00:26,631 - INFO - Images kept at original size - NO resizing applied
 ```
 
 ## Troubleshooting
 
-### Import Errors
-If you see import errors for `cv2`, `PIL`, or other packages, make sure you've installed all dependencies:
-```bash
-pip install -r requirements.txt
+### No Images Found
+
+**Issue**: "No images found in input directory"
+**Solution**: 
+- Check that images are in the `input/` folder
+- Verify file extensions match `SUPPORTED_FORMATS` in config.py
+
+### Memory Errors with Large Images
+
+**Issue**: Out of memory when processing very large images
+**Solution**:
+- Process fewer images at once
+- Increase system swap space
+- Use smaller original images
+
+### EXIF Date Not Found
+
+**Issue**: "No EXIF date found for image"
+**Solution**:
+- Enter date manually when prompted (DD-MM-YYYY format)
+- Or press Enter to use file modification date
+
+### Collage Too Large
+
+**Issue**: Collage file size is huge
+**Solution**:
+- Images are kept at original resolution - this is by design
+- To reduce size, you can manually reduce input image resolution before processing
+
+## Advanced Usage
+
+### Custom Enhancement Factors
+
+To disable specific enhancements, set factors to 1.0 or set flags to False:
+
+```python
+# config.py
+ENHANCE_BRIGHTNESS = False  # Disable brightness adjustment
+CONTRAST_FACTOR = 1.0       # No contrast change
 ```
 
-### No Faces Detected
-- Try adjusting `MIN_FACE_SIZE` in config.py
-- Switch to `face_recognition` method for better accuracy
-- Ensure photos have visible faces
+### Batch Processing Multiple Folders
 
-### Memory Issues
-If processing large batches of high-resolution images:
-- Reduce `TARGET_SIZE` in config.py
-- Process images in smaller batches
-- Reduce `COLLAGE_WIDTH`
+```bash
+# Process multiple photo sets
+for folder in folder1 folder2 folder3; do
+    cp $folder/*.jpg input/
+    python main.py
+    mv output/*.jpg final_collages/$folder_collage.jpg
+    rm input/*.jpg processed/*.jpg
+done
+```
 
-## Future Enhancements (Phase 2)
+### Running Without Prompts
 
-- **Google Photos Integration**: Direct import from Google Photos
-- **Batch Processing**: Process multiple folders
-- **Custom Templates**: Different collage layouts
-- **Web Interface**: User-friendly web UI
-- **Cloud Processing**: Process in the cloud
+To avoid EXIF date prompts, ensure all images have EXIF data, or modify the code to always use file dates.
 
-## Dependencies
+## Technical Details
 
-- **opencv-python**: Computer vision and face detection
-- **opencv-contrib-python**: Additional OpenCV modules
-- **Pillow**: Image processing and enhancement
-- **numpy**: Numerical operations
-- **face-recognition**: Advanced face detection
-- **dlib**: Machine learning toolkit
+### Image Formats
 
-## License
+- Input: JPEG, PNG
+- Output: JPEG (quality=95)
+- EXIF: Preserves date metadata for sorting
 
-This project uses open-source libraries. Please refer to individual library licenses for more information.
+### Performance
+
+- Processing time depends on:
+  - Number of images
+  - Image resolution
+  - Enhancement settings
+  - System specifications
+
+Typical performance:
+- ~20-30 images: 30-60 seconds
+- Enhancement: ~1-2 seconds per image
+- Collage creation: ~5-10 seconds
+
+## Limitations
+
+- **File Size**: Very large collages (>100MB) may have compatibility issues with some viewers
+- **Memory**: Processing hundreds of high-resolution images may require significant RAM
+- **EXIF Data**: Not all images contain EXIF dates (manual entry required)
 
 ## Contributing
 
-Feel free to submit issues, feature requests, or pull requests!
+To modify or extend the pipeline:
 
-## Author
+1. **Add new enhancement**: Edit `image_enhancer.py`
+2. **Change layout logic**: Modify `collage_maker.py`
+3. **Adjust workflow**: Update `main.py`
+4. **Add settings**: Update `config.py`
 
-Created as a photo processing and collage creation tool using open-source Python libraries.
+## License
+
+This project is provided as-is for personal use.
+
+## Changelog
+
+### Version 2.0 (Current)
+- ✨ Added flexible collage layout (1-5 images per row)
+- 🎯 Removed all image resizing/cropping - original sizes preserved
+- 📅 Enhanced EXIF date sorting with user input fallback
+- 🔢 Sequential file renaming based on chronological order
+- 📝 Improved logging and error handling
+
+### Version 1.0
+- Initial release with face detection and cropping
+- Fixed grid layout (4 columns)
+- Image resizing to uniform size
 
 ---
 
-**Enjoy creating beautiful photo collages!** 📸✨
+**Created**: December 2025  
+**Last Updated**: December 29, 2025

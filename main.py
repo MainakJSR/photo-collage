@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import List
 
 import config
-from face_detector import FaceDetector
 from image_processor import ImageProcessor
 from image_enhancer import ImageEnhancer
 from collage_maker import CollageMaker
@@ -51,10 +50,10 @@ def get_image_files(directory: str) -> List[str]:
             image_files.append(os.path.join(directory, filename))
     
     logging.info(f"Found {len(image_files)} images in {directory}")
-    return sorted(image_files)
+    return image_files
 
 
-def process_single_image(image_path: str, face_detector: FaceDetector, 
+def process_single_image(image_path: str, 
                         image_processor: ImageProcessor, image_enhancer: ImageEnhancer,
                         output_dir: str) -> str:
     """
@@ -62,7 +61,6 @@ def process_single_image(image_path: str, face_detector: FaceDetector,
     
     Args:
         image_path: Path to input image
-        face_detector: FaceDetector instance
         image_processor: ImageProcessor instance
         image_enhancer: ImageEnhancer instance
         output_dir: Directory to save processed image
@@ -80,18 +78,8 @@ def process_single_image(image_path: str, face_detector: FaceDetector,
             logger.error(f"Failed to load image: {image_path}")
             return None
         
-        # Detect faces
-        faces = face_detector.detect_faces(image)
-        
-        # Get bounding box
-        bbox = face_detector.get_face_bounding_box(
-            faces, 
-            image.shape[:2], 
-            padding=config.FACE_PADDING
-        )
-        
-        # Process image (crop and resize)
-        processed = image_processor.process_image(image, bbox)
+        # Process image (resize only, no cropping)
+        processed = image_processor.process_image(image)
         
         # Enhance image
         enhanced = image_enhancer.enhance(
@@ -131,16 +119,7 @@ def main():
     # Initialize components
     logger.info("Initializing components...")
     
-    face_detector = FaceDetector(
-        method=config.FACE_DETECTION_METHOD,
-        min_face_size=config.MIN_FACE_SIZE
-    )
-    
-    image_processor = ImageProcessor(
-        crop_shape=config.CROP_SHAPE,
-        aspect_ratio=config.ASPECT_RATIO,
-        target_size=config.TARGET_SIZE
-    )
+    image_processor = ImageProcessor()
     
     image_enhancer = ImageEnhancer(
         brightness_factor=config.BRIGHTNESS_FACTOR if config.ENHANCE_BRIGHTNESS else 1.0,
@@ -151,7 +130,7 @@ def main():
     
     collage_maker = CollageMaker(
         width=config.COLLAGE_WIDTH,
-        columns=config.COLLAGE_COLUMNS,
+        max_columns=config.COLLAGE_COLUMNS,
         spacing=config.COLLAGE_SPACING,
         background_color=config.COLLAGE_BACKGROUND_COLOR
     )
@@ -173,7 +152,6 @@ def main():
         logger.info(f"\n[{idx}/{len(image_files)}] Processing image...")
         processed_path = process_single_image(
             image_path,
-            face_detector,
             image_processor,
             image_enhancer,
             config.PROCESSED_DIR
@@ -190,7 +168,7 @@ def main():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         collage_path = os.path.join(config.OUTPUT_DIR, f"collage_{timestamp}.jpg")
         
-        result = collage_maker.create_collage(processed_images, collage_path)
+        result = collage_maker.create_collage(processed_images, collage_path, config.INPUT_DIR)
         
         if result:
             logger.info(f"Collage created successfully: {collage_path}")

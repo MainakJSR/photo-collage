@@ -10,11 +10,6 @@ INPUT_DIR = os.path.join(BASE_DIR, "input")
 PROCESSED_DIR = os.path.join(BASE_DIR, "processed")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 
-# Face detection settings
-FACE_DETECTION_METHOD = "opencv"  # Options: "opencv", "face_recognition"
-MIN_FACE_SIZE = (30, 30)  # Minimum face size to detect
-FACE_PADDING = 50  # Pixels to add around detected face
-
 # Image processing settings
 CROP_SHAPE = "rectangle"  # Options: "square", "rectangle"
 ASPECT_RATIO = (4, 3)  # For rectangle mode (width, height)
@@ -31,9 +26,9 @@ ENHANCE_COLOR = True
 COLOR_FACTOR = 1.1
 
 # Collage settings
-COLLAGE_WIDTH = 3000  # Width of final collage in pixels
-COLLAGE_COLUMNS = 4  # Number of columns in collage
-COLLAGE_SPACING = 10  # Spacing between images in pixels
+COLLAGE_WIDTH = 6000  # Width of final collage in pixels (increased to fit more images)
+COLLAGE_COLUMNS = 5  # Maximum number of images per row (1-5)
+COLLAGE_SPACING = 20  # Spacing between images in pixels
 COLLAGE_BACKGROUND_COLOR = (255, 255, 255)  # White background
 
 # Supported image formats
