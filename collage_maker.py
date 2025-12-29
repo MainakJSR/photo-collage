@@ -37,7 +37,7 @@ class CollageMaker:
     
     def arrange_images_in_rows(self, images: List[Image.Image]) -> List[List[Image.Image]]:
         """
-        Arrange images into rows with 1-5 images per row based on dimensions
+        Arrange images into rows with 1-5 images per row to create a more square layout
         
         Args:
             images: List of PIL Images at original size
@@ -45,44 +45,38 @@ class CollageMaker:
         Returns:
             List of rows, where each row is a list of images
         """
+        num_images = len(images)
+        
+        # Calculate optimal number of columns to create a squarer layout
+        # We want height ~= width, so aim for sqrt(num_images) rows
+        target_rows = max(3, int(math.sqrt(num_images) * 0.8))
+        images_per_row = math.ceil(num_images / target_rows)
+        images_per_row = min(images_per_row, self.max_columns)
+        
+        logger.info(f"Creating square layout: targeting ~{images_per_row} images per row for {num_images} images")
+        
         rows = []
         i = 0
         
-        while i < len(images):
-            remaining = len(images) - i
+        while i < num_images:
+            remaining = num_images - i
             
-            if remaining == 1:
-                # Single image gets its own row
-                row_images = [images[i]]
-                i += 1
-            elif remaining == 2:
-                # Two images per row
-                row_images = images[i:i+2]
-                i += 2
+            if remaining <= images_per_row:
+                # Last row - put all remaining images
+                row_images = images[i:]
+                i = num_images
             else:
-                # 3 or more images remaining - try to fit optimally
-                # Check widths to decide how many fit well
-                row_images = []
-                accumulated_width = 0
+                # Try to fit images_per_row, but adjust based on remaining
+                rows_left = math.ceil(remaining / images_per_row)
+                optimal_count = math.ceil(remaining / rows_left)
+                optimal_count = min(optimal_count, self.max_columns)
                 
-                for j in range(min(self.max_columns, remaining)):
-                    img = images[i + j]
-                    accumulated_width += img.width + self.spacing
-                    
-                    # If adding this image would make row too wide, stop
-                    if accumulated_width > self.width * 1.3 and j > 0:
-                        break
-                    row_images.append(img)
-                
-                # Ensure at least 1 image per row
-                if not row_images:
-                    row_images = [images[i]]
-                
-                i += len(row_images)
+                row_images = images[i:i+optimal_count]
+                i += optimal_count
             
             rows.append(row_images)
         
-        logger.info(f"Arranged {len(images)} images into {len(rows)} rows")
+        logger.info(f"Arranged {num_images} images into {len(rows)} rows for square layout")
         return rows
     
     def get_image_date(self, image_path: str, input_dir: str = None) -> datetime:
@@ -282,9 +276,16 @@ class CollageMaker:
             collage.paste(row_img, (x_offset, y_offset))
             y_offset += row_img.height + self.spacing
         
-        # Save collage
-        collage.save(output_path, quality=95)
-        logger.info(f"Collage saved to {output_path} ({collage_width}x{collage_height})")
+        # Save two versions: high quality (~25MB) and compressed (<5MB)
+        # Version 1: High quality
+        collage.save(output_path, quality=75, optimize=True)
+        logger.info(f"High quality collage saved to {output_path} ({collage_width}x{collage_height})")
+        
+        # Version 2: Compressed version (<5MB)
+        base_path = os.path.splitext(output_path)[0]
+        compressed_path = f"{base_path}_compressed.jpg"
+        collage.save(compressed_path, quality=11, optimize=True)
+        logger.info(f"Compressed collage saved to {compressed_path}")
         logger.info(f"Images kept at original size - NO resizing applied")
         
         return output_path
