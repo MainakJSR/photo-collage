@@ -7,6 +7,7 @@ from PIL.ExifTags import TAGS
 import math
 import logging
 import os
+import re
 from datetime import datetime
 from typing import List, Tuple
 
@@ -79,6 +80,55 @@ class CollageMaker:
         logger.info(f"Arranged {num_images} images into {len(rows)} rows for square layout")
         return rows
     
+    def extract_date_from_filename(self, filename: str) -> datetime:
+        """
+        Try to extract date from filename using various patterns
+        
+        Args:
+            filename: Name of the file
+            
+        Returns:
+            datetime object if date found, None otherwise
+        """
+        # Remove extension
+        name = os.path.splitext(filename)[0]
+        
+        # Common date patterns in filenames
+        patterns = [
+            # YYYYMMDD (e.g., 20231215)
+            (r'(\d{4})(\d{2})(\d{2})', '%Y%m%d'),
+            # YYYY-MM-DD or YYYY_MM_DD
+            (r'(\d{4})[-_](\d{2})[-_](\d{2})', '%Y-%m-%d'),
+            # DDMMYYYY (e.g., 15122023)
+            (r'(\d{2})(\d{2})(\d{4})', '%d%m%Y'),
+            # DD-MM-YYYY or DD_MM_YYYY
+            (r'(\d{2})[-_](\d{2})[-_](\d{4})', '%d-%m-%Y'),
+            # IMG_YYYYMMDD
+            (r'IMG[_-]?(\d{4})(\d{2})(\d{2})', '%Y%m%d'),
+            # YYYYMMDD_HHMMSS
+            (r'(\d{4})(\d{2})(\d{2})[_-](\d{2})(\d{2})(\d{2})', '%Y%m%d_%H%M%S'),
+        ]
+        
+        for pattern, date_format in patterns:
+            match = re.search(pattern, name)
+            if match:
+                try:
+                    date_str = ''.join(match.groups())
+                    # Reconstruct with separators if needed
+                    if '-' in date_format or '_' in date_format:
+                        date_str = match.group(0).replace('IMG', '').replace('img', '').strip('_-')
+                    
+                    dt = datetime.strptime(date_str, date_format)
+                    # Validate reasonable date range
+                    if 1990 <= dt.year <= datetime.now().year + 1:
+                        logger.info(f"{filename}: Extracted date from filename: {dt.strftime('%d-%m-%Y')}")
+                        return dt
+                except (ValueError, AttributeError) as e:
+                    logger.debug(f"Failed to parse date from {filename} with pattern {pattern}: {e}")
+                    continue
+        
+        return None
+    
     def get_image_date(self, image_path: str, input_dir: str = None) -> datetime:
         """
         Get the creation date from image EXIF data
@@ -146,20 +196,26 @@ class CollageMaker:
         except Exception as e:
             logger.debug(f"Could not read EXIF from {original_path}: {e}")
         
-        # No valid EXIF date found - ask user for input
-        logger.warning(f"No EXIF date found for {os.path.basename(image_path)}")
+        # Try to extract date from filename
+        filename = os.path.basename(image_path)
+        filename_date = self.extract_date_from_filename(filename)
+        if filename_date:
+            return filename_date
+        
+        # No valid EXIF date or filename date found - ask user for input
+        logger.warning(f"No EXIF or filename date found for {filename}")
         
         while True:
             try:
-                user_input = input(f"Enter date for '{os.path.basename(image_path)}' (DD-MM-YYYY or press Enter to use file date): ").strip()
+                user_input = input(f"Enter date for '{filename}' (DD-MM-YYYY or press Enter to use file date): ").strip()
                 
                 if not user_input:
                     dt = datetime.fromtimestamp(os.path.getmtime(image_path))
-                    logger.info(f"{os.path.basename(image_path)}: Using file date {dt.strftime('%d-%m-%Y')}")
+                    logger.info(f"{filename}: Using file modification date {dt.strftime('%d-%m-%Y')}")
                     return dt
                 
                 dt = datetime.strptime(user_input, '%d-%m-%Y')
-                logger.info(f"{os.path.basename(image_path)}: Using user-provided date {user_input}")
+                logger.info(f"{filename}: Using user-provided date {user_input}")
                 return dt
             except ValueError:
                 print("Invalid format. Please use DD-MM-YYYY format (e.g., 15-08-2021)")
