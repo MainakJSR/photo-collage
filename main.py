@@ -213,8 +213,15 @@ def main():
     
     # Create directories if they don't exist
     os.makedirs(config.INPUT_DIR, exist_ok=True)
-    os.makedirs(config.PROCESSED_DIR, exist_ok=True)
     os.makedirs(config.OUTPUT_DIR, exist_ok=True)
+    
+    # Clear and recreate processed directory
+    import shutil
+    if os.path.exists(config.PROCESSED_DIR):
+        logger.info(f"Clearing processed directory: {config.PROCESSED_DIR}")
+        shutil.rmtree(config.PROCESSED_DIR)
+    os.makedirs(config.PROCESSED_DIR, exist_ok=True)
+    logger.info("Processed directory is ready")
     
     # Initialize components
     logger.info("Initializing components...")

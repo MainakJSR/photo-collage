@@ -16,13 +16,13 @@ ASPECT_RATIO = (4, 3)  # For rectangle mode (width, height)
 TARGET_SIZE = (800, 600)  # Target size for processed images
 
 # Enhancement settings
-ENHANCE_BRIGHTNESS = True
+ENHANCE_BRIGHTNESS = False  # Set to False to disable enhancement
 BRIGHTNESS_FACTOR = 1.1  # 1.0 = no change, >1.0 = brighter
-ENHANCE_CONTRAST = True
+ENHANCE_CONTRAST = False  # Set to False to disable enhancement
 CONTRAST_FACTOR = 1.2
-ENHANCE_SHARPNESS = True
+ENHANCE_SHARPNESS = False  # Set to False to disable enhancement
 SHARPNESS_FACTOR = 1.3
-ENHANCE_COLOR = True
+ENHANCE_COLOR = False  # Set to False to disable enhancement
 COLOR_FACTOR = 1.1
 
 # Collage settings
